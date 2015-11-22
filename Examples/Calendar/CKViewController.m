@@ -22,6 +22,9 @@
         calendar.delegate = self;
         calendar.multiselectEnabled = YES;
         
+        calendar.defaultDateItem = [[CKDateItem alloc] init];
+        calendar.defaultDateItem.selectedRangeStartBackgroundColor = [UIColor redColor];
+        calendar.defaultDateItem.selectedRangeEndBackgroundColor = [UIColor greenColor];
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
             
             NSDate *startDate = [NSDate date];

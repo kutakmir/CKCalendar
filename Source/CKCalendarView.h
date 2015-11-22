@@ -21,9 +21,12 @@
 
 @property (nonatomic, strong) UIColor *backgroundColor;
 @property (nonatomic, strong) UIColor *selectedBackgroundColor;
-@property (nonatomic, strong) UIColor *selectedRangeEdgeBackgroundColor;
+@property (nonatomic, strong) UIColor *selectedRangeStartBackgroundColor;
+@property (nonatomic, strong) UIColor *selectedRangeEndBackgroundColor;
 @property (nonatomic, strong) UIColor *textColor;
 @property (nonatomic, strong) UIColor *selectedTextColor;
+@property (nonatomic, strong) UIColor *selectedRangeStartTextColor;
+@property (nonatomic, strong) UIColor *selectedRangeEndTextColor;
 
 @end
 
@@ -41,6 +44,7 @@ typedef enum {
 @property (nonatomic, strong) NSLocale *locale;
 
 @property (nonatomic, readonly) NSArray *datesShowing;
+@property (nonatomic, strong) CKDateItem *defaultDateItem;
 
 @property (nonatomic) BOOL onlyShowCurrentMonth;
 @property (nonatomic) BOOL adaptHeightToNumberOfWeeksInMonth;

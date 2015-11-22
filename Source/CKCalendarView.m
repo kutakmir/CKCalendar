@@ -100,6 +100,24 @@
     return self;
 }
 
+- (id)copyWithZone:(NSZone *)zone
+{
+    CKDateItem *copy = [[[self class] alloc] init];
+    
+    if (copy) {
+        [copy setBackgroundColor:self.backgroundColor];
+        [copy setSelectedBackgroundColor:self.selectedBackgroundColor];
+        [copy setTextColor:self.textColor];
+        [copy setSelectedTextColor:self.selectedTextColor];
+        [copy setSelectedRangeStartBackgroundColor:self.selectedRangeStartBackgroundColor];
+        [copy setSelectedRangeStartTextColor:self.selectedRangeStartTextColor];
+        [copy setSelectedRangeEndBackgroundColor:self.selectedRangeEndBackgroundColor];
+        [copy setSelectedRangeEndTextColor:self.selectedRangeEndTextColor];
+    }
+    
+    return copy;
+}
+
 @end
 
 @interface CKCalendarView ()
@@ -116,6 +134,8 @@
 
 @property (nonatomic, strong) NSDate *monthShowing;
 @property (nonatomic, strong) NSMutableDictionary *selectedDates;
+@property (nonatomic, strong) NSDate *rangeStartDate;
+@property (nonatomic, strong) NSDate *rangeEndDate;
 @property (nonatomic, strong) NSCalendar *calendar;
 @property(nonatomic, assign) CGFloat cellWidth;
 
@@ -301,11 +321,21 @@
         DateButton *dateButton = [self.dateButtons objectAtIndex:dateButtonPosition];
 
         dateButton.date = date;
-        CKDateItem *item = [[CKDateItem alloc] init];
+        CKDateItem *item;
+        if (self.defaultDateItem) {
+            item = [self.defaultDateItem copy];
+        } else {
+            item = [[CKDateItem alloc] init];
+        }
+        
+        
+        // Today
         if (self.highlightToday && [self _dateIsToday:dateButton.date]) {
             item.textColor = UIColorFromRGB(0xF2F2F2);
             item.backgroundColor = [UIColor lightGrayColor];
-        } else if (!self.onlyShowCurrentMonth && [self _compareByMonth:date toDate:self.monthShowing] != NSOrderedSame) {
+        } else
+            // Different month
+            if (!self.onlyShowCurrentMonth && [self _compareByMonth:date toDate:self.monthShowing] != NSOrderedSame) {
             item.textColor = [UIColor lightGrayColor];
         }
 
@@ -313,12 +343,25 @@
             [self.delegate calendar:self configureDateItem:item forDate:date];
         }
 
+        // Selected date
         if ([self isDateSelected:date]) {
             [dateButton setTitleColor:item.selectedTextColor forState:UIControlStateNormal];
             dateButton.backgroundColor = item.selectedBackgroundColor;
         } else {
+            // Normal date
             [dateButton setTitleColor:item.textColor forState:UIControlStateNormal];
             dateButton.backgroundColor = item.backgroundColor;
+        }
+        
+        // Range start date
+        if (self.rangeStartDate && [self date:date isSameDayAsDate:self.rangeStartDate]) {
+            dateButton.backgroundColor = item.selectedRangeStartBackgroundColor;
+            [dateButton setTitleColor:item.selectedRangeStartTextColor forState:UIControlStateNormal];
+        }
+        // Range end date
+        if (self.rangeEndDate && [self date:date isSameDayAsDate:self.rangeEndDate]) {
+            dateButton.backgroundColor = item.selectedRangeEndBackgroundColor;
+            [dateButton setTitleColor:item.selectedRangeEndTextColor forState:UIControlStateNormal];
         }
 
         dateButton.frame = [self _calculateDayCellFrame:date];
@@ -400,6 +443,9 @@
     if (exclusive) {
         [self reloadData];
     }
+    
+    self.rangeStartDate = startDate;
+    self.rangeEndDate = endDate;
     
     NSInteger daysDifference = [endDate timeIntervalSinceDate:startDate]/60/60/24;
     for (NSInteger i = 0; i <= daysDifference; i ++) {
