@@ -21,6 +21,7 @@
 
 @property (nonatomic, strong) UIColor *backgroundColor;
 @property (nonatomic, strong) UIColor *selectedBackgroundColor;
+@property (nonatomic, strong) UIColor *selectedRangeEdgeBackgroundColor;
 @property (nonatomic, strong) UIColor *textColor;
 @property (nonatomic, strong) UIColor *selectedTextColor;
 
@@ -60,6 +61,7 @@ typedef enum {
 - (void)setDayOfWeekBottomColor:(UIColor *)bottomColor topColor:(UIColor *)topColor;
 
 - (void)selectDate:(NSDate *)date makeVisible:(BOOL)visible;
+- (void)selectRangeStartDate: (NSDate *)startDate endDate: (NSDate *)endDate exclusive: (BOOL)exclusive makeVisible: (BOOL)makeVisible;
 - (void)reloadData;
 - (void)reloadDates:(NSArray *)dates;
 
@@ -82,5 +84,12 @@ typedef enum {
 - (void)calendar:(CKCalendarView *)calendar didChangeToMonth:(NSDate *)date;
 
 - (void)calendar:(CKCalendarView *)calendar didLayoutInRect:(CGRect)frame;
+
+@end
+
+
+@interface NSDate (DateOffset)
+
+- (NSDate *)dateWithDayOffset: (NSInteger)dayOffset;
 
 @end

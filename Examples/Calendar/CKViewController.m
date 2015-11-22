@@ -21,6 +21,13 @@
         self.calendar = calendar;
         calendar.delegate = self;
         calendar.multiselectEnabled = YES;
+        
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            
+            NSDate *startDate = [NSDate date];
+            NSDate *endDate = [startDate dateWithDayOffset:5];
+            [calendar selectRangeStartDate:startDate endDate:endDate exclusive:YES makeVisible:YES];
+        });
 
         self.dateFormatter = [[NSDateFormatter alloc] init];
         [self.dateFormatter setDateFormat:@"dd/MM/yyyy"];
@@ -44,6 +51,8 @@
         self.view.backgroundColor = [UIColor whiteColor];
 
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(localeDidChange) name:NSCurrentLocaleDidChangeNotification object:nil];
+        
+        
     }
     return self;
 }

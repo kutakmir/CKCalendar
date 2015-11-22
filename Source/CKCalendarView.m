@@ -394,15 +394,42 @@
     [self setNeedsLayout];
 }
 
+
+- (void)selectRangeStartDate: (NSDate *)startDate endDate: (NSDate *)endDate exclusive: (BOOL)exclusive makeVisible: (BOOL)makeVisible
+{
+    if (exclusive) {
+        [self reloadData];
+    }
+    
+    NSInteger daysDifference = [endDate timeIntervalSinceDate:startDate]/60/60/24;
+    for (NSInteger i = 0; i <= daysDifference; i ++) {
+        NSDate *date = [startDate dateWithDayOffset:i];
+        [self selectDate:date makeVisible:makeVisible];
+    }
+    [self setNeedsLayout];
+}
+
+- (void)deselectDate:(NSDate *)date makeVisible:(BOOL)visible {
+    // Deselection
+    [self setDateDeselected:date];
+    if (visible && date) {
+        self.monthShowing = date;
+    }
+}
+
 - (void)selectDate:(NSDate *)date makeVisible:(BOOL)visible {
     NSMutableArray *datesToReload = [NSMutableArray array];
+    if (!date) {
+        return;
+    }
+    
     if (self.multiselectEnabled) {
         // Multiple selection
         [self setDateSelected:date];
         [datesToReload addObject:date];
     } else {
         // Single selection
-        if (date && ![self isDateSelected:date]) {
+        if (![self isDateSelected:date]) {
             
             if ([[self.selectedDates allValues] count]) {
                 [self.selectedDates removeAllObjects];
@@ -482,33 +509,56 @@
     DateButton *dateButton = sender;
     NSDate *date = dateButton.date;
     if ([self isDateSelected:date]) {
-        // deselection..
+        // Deselection
         if ([self.delegate respondsToSelector:@selector(calendar:willDeselectDate:)] && ![self.delegate calendar:self willDeselectDate:date]) {
             return;
         }
-        date = nil;
-    } else if ([self.delegate respondsToSelector:@selector(calendar:willSelectDate:)] && ![self.delegate calendar:self willSelectDate:date]) {
-        return;
+        [self deselectDate:date makeVisible:YES];
+        if ([self.delegate respondsToSelector:@selector(calendar:didDeselectDate:)]) {
+            [self.delegate calendar:self didDeselectDate:date];
+        }
+    } else {
+        // Selection
+        if ([self.delegate respondsToSelector:@selector(calendar:willSelectDate:)] && ![self.delegate calendar:self willSelectDate:date]) {
+            return;
+        }
+        [self selectDate:date makeVisible:YES];
+        if ([self.delegate respondsToSelector:@selector(calendar:didSelectDate:)]) {
+            [self.delegate calendar:self didSelectDate:date];
+        }
     }
-
-    [self selectDate:date makeVisible:YES];
-    [self.delegate calendar:self didSelectDate:date];
+    
     [self setNeedsLayout];
 }
 
 #pragma mark - Date Selection
 
+- (NSString *)keyForDate: (NSDate *)date
+{
+    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+    [formatter setDateFormat:@"yyyyMMdd"];
+    return [formatter stringFromDate:date];
+}
+
 
 - (BOOL)isDateSelected: (NSDate *)date
 {
-    NSString *dateString = [NSString stringWithFormat:@"%@", date];
+    NSString *dateString = [self keyForDate:date];
     return self.selectedDates[dateString] ? YES : NO;
 }
 
 - (void)setDateSelected: (NSDate *)date
 {
-    NSString *dateString = [NSString stringWithFormat:@"%@", date];
+    NSString *dateString = [self keyForDate:date];
     self.selectedDates[dateString] = date;
+}
+
+- (void)setDateDeselected: (NSDate *)date
+{
+    NSString *dateString = [self keyForDate:date];
+    if (self.selectedDates[dateString]) {
+        [self.selectedDates removeObjectForKey:dateString];
+    }
 }
 
 #pragma mark - Theming getters/setters
@@ -680,3 +730,14 @@
 }
 
 @end
+
+@implementation NSDate (DateOffset)
+
+
+- (NSDate *)dateWithDayOffset: (NSInteger)dayOffset
+{
+    return [NSDate dateWithTimeInterval:60*60*24*dayOffset sinceDate:[NSDate date]];
+}
+
+@end
+
