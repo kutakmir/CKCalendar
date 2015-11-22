@@ -20,6 +20,7 @@
         CKCalendarView *calendar = [[CKCalendarView alloc] initWithStartDay:startMonday];
         self.calendar = calendar;
         calendar.delegate = self;
+        calendar.multiselectEnabled = YES;
 
         self.dateFormatter = [[NSDateFormatter alloc] init];
         [self.dateFormatter setDateFormat:@"dd/MM/yyyy"];

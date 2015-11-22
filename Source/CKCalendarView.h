@@ -43,6 +43,8 @@ typedef enum {
 
 @property (nonatomic) BOOL onlyShowCurrentMonth;
 @property (nonatomic) BOOL adaptHeightToNumberOfWeeksInMonth;
+@property (nonatomic, assign) BOOL multiselectEnabled;
+@property (nonatomic, assign) BOOL highlightToday;
 
 @property (nonatomic, weak) id<CKCalendarDelegate> delegate;
 

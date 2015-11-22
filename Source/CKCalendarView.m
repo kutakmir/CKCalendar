@@ -115,7 +115,7 @@
 @property(nonatomic, strong) NSDateFormatter *dateFormatter;
 
 @property (nonatomic, strong) NSDate *monthShowing;
-@property (nonatomic, strong) NSDate *selectedDate;
+@property (nonatomic, strong) NSMutableDictionary *selectedDates;
 @property (nonatomic, strong) NSCalendar *calendar;
 @property(nonatomic, assign) CGFloat cellWidth;
 
@@ -219,6 +219,9 @@
     self.monthShowing = [NSDate date];
     [self _setDefaultStyle];
     
+    
+    self.selectedDates = [NSMutableDictionary dictionary];
+    
     [self layoutSubviews]; // TODO: this is a hack to get the first month to show properly
 }
 
@@ -299,7 +302,7 @@
 
         dateButton.date = date;
         CKDateItem *item = [[CKDateItem alloc] init];
-        if ([self _dateIsToday:dateButton.date]) {
+        if (self.highlightToday && [self _dateIsToday:dateButton.date]) {
             item.textColor = UIColorFromRGB(0xF2F2F2);
             item.backgroundColor = [UIColor lightGrayColor];
         } else if (!self.onlyShowCurrentMonth && [self _compareByMonth:date toDate:self.monthShowing] != NSOrderedSame) {
@@ -310,7 +313,7 @@
             [self.delegate calendar:self configureDateItem:item forDate:date];
         }
 
-        if (self.selectedDate && [self date:self.selectedDate isSameDayAsDate:date]) {
+        if ([self isDateSelected:date]) {
             [dateButton setTitleColor:item.selectedTextColor forState:UIControlStateNormal];
             dateButton.backgroundColor = item.selectedBackgroundColor;
         } else {
@@ -330,6 +333,7 @@
         [self.delegate calendar:self didLayoutInRect:self.frame];
     }
 }
+
 
 - (void)_updateDayOfWeekLabels {
     NSArray *weekdays = [self.dateFormatter shortWeekdaySymbols];
@@ -392,13 +396,21 @@
 
 - (void)selectDate:(NSDate *)date makeVisible:(BOOL)visible {
     NSMutableArray *datesToReload = [NSMutableArray array];
-    if (self.selectedDate) {
-        [datesToReload addObject:self.selectedDate];
-    }
-    if (date) {
+    if (self.multiselectEnabled) {
+        // Multiple selection
+        [self setDateSelected:date];
         [datesToReload addObject:date];
+    } else {
+        // Single selection
+        if (date && ![self isDateSelected:date]) {
+            
+            if ([[self.selectedDates allValues] count]) {
+                [self.selectedDates removeAllObjects];
+            }
+            [datesToReload addObject:date];
+            [self setDateSelected: date];
+        }
     }
-    self.selectedDate = date;
     [self reloadDates:datesToReload];
     if (visible && date) {
         self.monthShowing = date;
@@ -406,7 +418,7 @@
 }
 
 - (void)reloadData {
-    self.selectedDate = nil;
+    [self.selectedDates removeAllObjects];
     [self setNeedsLayout];
 }
 
@@ -469,7 +481,7 @@
 - (void)_dateButtonPressed:(id)sender {
     DateButton *dateButton = sender;
     NSDate *date = dateButton.date;
-    if ([date isEqualToDate:self.selectedDate]) {
+    if ([self isDateSelected:date]) {
         // deselection..
         if ([self.delegate respondsToSelector:@selector(calendar:willDeselectDate:)] && ![self.delegate calendar:self willDeselectDate:date]) {
             return;
@@ -482,6 +494,21 @@
     [self selectDate:date makeVisible:YES];
     [self.delegate calendar:self didSelectDate:date];
     [self setNeedsLayout];
+}
+
+#pragma mark - Date Selection
+
+
+- (BOOL)isDateSelected: (NSDate *)date
+{
+    NSString *dateString = [NSString stringWithFormat:@"%@", date];
+    return self.selectedDates[dateString] ? YES : NO;
+}
+
+- (void)setDateSelected: (NSDate *)date
+{
+    NSString *dateString = [NSString stringWithFormat:@"%@", date];
+    self.selectedDates[dateString] = date;
 }
 
 #pragma mark - Theming getters/setters
